@@ -1,5 +1,5 @@
 import pytest
-from option_pricer import price_call
+from src.option_pricer import price_call
 
 
 def test_basic_formula():
@@ -46,7 +46,7 @@ def test_higher_strike_means_lower_call_price():
 
 
 def test_cli_end_to_end(monkeypatch, capsys):
-    from option_pricer import main
+    from src.option_pricer import main
     # Simulate user typing: s0=100, k1=120, k2=130, c_k1=5.0, alpha=3
     inputs = iter(["100", "120", "130", "5.0", "3"])
     monkeypatch.setattr("builtins.input", lambda prompt="": next(inputs))
