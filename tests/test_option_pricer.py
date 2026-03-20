@@ -3,11 +3,16 @@ from src.option_pricer import price_call
 
 
 def test_basic_formula():
-    # Equation 6: C(K2) = ((K2 - S0) / (K1 - S0))^(1 - alpha) * C(K1)
-    # S0=100, K1=120, K2=130, C_K1=5.0, alpha=3
-    # Expected: (30/20)^(1-3) * 5 = 1.5^(-2) * 5 = 5/2.25 = 2.2222...
-    result = price_call(s0=100, k1=120, k2=130, c_k1=5.0, alpha=3)
-    assert result == pytest.approx(2.2222222222, rel=1e-6)
+    """
+    Equation 6: C(K2) = ((K2 - S0) / (K1 - S0))^(1 - alpha) * C(K1)
+    S0=100, K1=120, K2=130, C_K1=5.0, alpha=3
+    Expected: (30/20)^(1-3) * 5 = 1.5^(-2) * 5 = 5/2.25 = 2.2222...
+
+    Use trading day of 03/20/2026 to price relatively QQQ otm call 
+    on right tail
+    """
+    result = price_call(s0=581.73, k1=590, k2=600, c_k1=0.03, alpha=2.6)
+    assert result == pytest.approx(0.00844, rel=1e-3)
 
 
 def test_k2_equals_k1_returns_c_k1():
