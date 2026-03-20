@@ -1,0 +1,33 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# pytest cache
+.pytest_cache/
+
+# mypy cache
+.mypy_cache/
+
+# General cache directories
+.cache/
+*.cache
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# IDE cache
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS cache files
+.DS_Store
+Thumbs.db
