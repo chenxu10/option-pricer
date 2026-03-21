@@ -1,5 +1,9 @@
+from src.option_pricer import main as cli_main
+
+
 def main():
-    print("Hello from option-pricer!")
+    """Entry point that runs the CLI option pricer"""
+    cli_main()
 
 
 if __name__ == "__main__":

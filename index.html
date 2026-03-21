@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Option Pricer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        label {
+            display: inline-block;
+            width: 200px;
+            margin-bottom: 10px;
+        }
+        input {
+            width: 150px;
+            padding: 5px;
+            margin-bottom: 10px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border: 2px solid #4CAF50;
+            background-color: #f0f8f0;
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            display: none;
+        }
+        #result.error {
+            border-color: #f44336;
+            background-color: #ffebee;
+            color: #d32f2f;
+        }
+        #result.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <h1>Option Pricing Calculator</h1>
+    <form id="pricing-form">
+        <label for="s0">S0 (Current Price):</label>
+        <input type="number" id="s0" name="s0" step="0.01" required><br>
+        
+        <label for="k1">K1 (Anchor Strike):</label>
+        <input type="number" id="k1" name="k1" step="0.01" required><br>
+        
+        <label for="k2">K2 (Target Strike):</label>
+        <input type="number" id="k2" name="k2" step="0.01" required><br>
+        
+        <label for="c_k1">C(K1) (Call Price at K1):</label>
+        <input type="number" id="c_k1" name="c_k1" step="0.01" required><br>
+        
+        <label for="alpha">Alpha (Tail Index > 1):</label>
+        <input type="number" id="alpha" name="alpha" step="0.01" required><br>
+        
+        <button type="submit">Calculate</button>
+    </form>
+    <div id="result"></div>
+    
+    <script>
+        document.getElementById('pricing-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = 'show';
+            resultDiv.textContent = 'Calculating...';
+            
+            try {
+                const data = {
+                    s0: parseFloat(document.getElementById('s0').value),
+                    k1: parseFloat(document.getElementById('k1').value),
+                    k2: parseFloat(document.getElementById('k2').value),
+                    c_k1: parseFloat(document.getElementById('c_k1').value),
+                    alpha: parseFloat(document.getElementById('alpha').value)
+                };
+                
+                // Validate inputs
+                if (Object.values(data).some(isNaN)) {
+                    throw new Error('Please fill in all fields with valid numbers');
+                }
+                
+                if (data.alpha <= 1) {
+                    throw new Error('Alpha must be greater than 1');
+                }
+                
+                if (data.k1 <= data.s0 || data.k2 <= data.s0) {
+                    throw new Error('Strikes must be greater than S0');
+                }
+                
+                if (data.c_k1 <= 0) {
+                    throw new Error('C(K1) must be positive');
+                }
+                
+                const response = await fetch('/api/price', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.error || 'Calculation failed');
+                }
+                
+                resultDiv.className = 'show';
+                resultDiv.innerHTML = `C(K2) = ${result.price.toFixed(6)}`;
+            } catch (error) {
+                resultDiv.className = 'show error';
+                resultDiv.textContent = 'Error: ' + error.message;
+                console.error('Calculation error:', error);
+            }
+        });
+    </script>
+</body>
+</html>

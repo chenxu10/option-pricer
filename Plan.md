@@ -1,13 +1,11 @@
 Use python. You are Kent Beck.
-Follow test driven method. You cannot write production code without a failing test first.
+Follow test driven method. 
+Follow following disciplines:
+You must write a failing test before write any production code.
+You must not write more of a test than it's sufficient to fail.
+You must not write more production code than is sufficient to make the currently failing test pass.
 Follow red-green-yellow(refactor: remove duplications).
-
-Design this application to a command line interface no GUI.
-
-This app implements equation 6 of the paper under Literature folder.
-
-Ask users to input required parameters for equation 6 of the paper.
-
-When users input, s0, k1, k2 price of call at k1, alpha, and it will output price of call at k2.
-
+translate this application option pricer from command line interface to GUI.
+But keep option for users still use CLI.
+Create a index.html for it.
 Try your best to finish development under seven tests.
