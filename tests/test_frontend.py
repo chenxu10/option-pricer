@@ -142,8 +142,16 @@ class TestFrontendErrorHandling:
         # Should display error in the result div
         displays_error = 'error' in html
         
+        # Should have helpful error message for common issues
+        has_helpful_message = (
+            'server' in html or 
+            'flask' in html or
+            'run_web' in html
+        )
+        
         assert has_try_catch, "JavaScript must have try-catch for error handling"
         assert displays_error, "JavaScript must display errors to user"
+        assert has_helpful_message, "JavaScript should guide user if server not running"
     
     def test_error_display_has_styling(self, client):
         """Presentation: Error display should have visual distinction"""
@@ -270,3 +278,61 @@ class TestDecouplingFromPricingLogic:
         
         # Don't do this in frontend tests:
         # assert data['price'] == 2.222222  # <-- This couples us to pricing logic!
+
+
+# ============================================================================
+# Bug Fix Tests - Specific Issues Found in Production
+# ============================================================================
+
+class TestFetchFailureBug:
+    """
+    Test to diagnose and fix the 'Failed to fetch' error shown in the screenshot.
+    The error shows 'Error: Failed to fetch' which means the JavaScript fetch()
+    failed to connect or got an error response.
+    """
+    
+    def test_exact_user_input_from_screenshot(self, client):
+        """
+        Reproduce the exact scenario from the screenshot:
+        S0=581.73, K1=590, K2=600, C(K1)=0.03, Alpha=2.6
+        
+        This should work but shows 'Failed to fetch' error.
+        """
+        response = client.post('/api/price', json={
+            's0': 581.73,
+            'k1': 590,
+            'k2': 600,
+            'c_k1': 0.03,
+            'alpha': 2.6
+        })
+        
+        # Should succeed, not fail with 400 or 500
+        assert response.status_code == 200, \
+            f"Expected 200 but got {response.status_code}. Data: {response.get_json()}"
+        
+        data = response.get_json()
+        assert 'price' in data
+        assert isinstance(data['price'], float)
+    
+    def test_server_handles_all_valid_edge_cases(self, client):
+        """
+        Test various edge cases that might cause fetch to fail.
+        """
+        test_cases = [
+            # Small values
+            {'s0': 1, 'k1': 2, 'k2': 3, 'c_k1': 0.01, 'alpha': 2},
+            # Large values
+            {'s0': 10000, 'k1': 11000, 'k2': 12000, 'c_k1': 100, 'alpha': 5},
+            # Very small c_k1
+            {'s0': 100, 'k1': 120, 'k2': 130, 'c_k1': 0.0001, 'alpha': 3},
+            # The exact screenshot values
+            {'s0': 581.73, 'k1': 590, 'k2': 600, 'c_k1': 0.03, 'alpha': 2.6},
+        ]
+        
+        for i, test_input in enumerate(test_cases):
+            response = client.post('/api/price', json=test_input)
+            assert response.status_code == 200, \
+                f"Test case {i} failed with status {response.status_code}: {test_input}"
+            
+            data = response.get_json()
+            assert 'price' in data, f"Test case {i} missing price field: {data}"

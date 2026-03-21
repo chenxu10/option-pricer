@@ -128,7 +128,14 @@
                 resultDiv.innerHTML = `C(K2) = ${result.price.toFixed(6)}`;
             } catch (error) {
                 resultDiv.className = 'show error';
-                resultDiv.textContent = 'Error: ' + error.message;
+                
+                // Provide helpful error messages for common issues
+                let errorMessage = error.message;
+                if (error.message === 'Failed to fetch') {
+                    errorMessage = 'Failed to connect to server. Make sure to run "python run_web.py" first, then open http://127.0.0.1:5000';
+                }
+                
+                resultDiv.textContent = 'Error: ' + errorMessage;
                 console.error('Calculation error:', error);
             }
         });
