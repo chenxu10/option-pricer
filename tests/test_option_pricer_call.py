@@ -1,7 +1,7 @@
 """
-Core Option Pricing Logic Tests
+Core Option Pricing Logic Tests - Call Options
 
-These tests verify the mathematical pricing calculations.
+These tests verify the mathematical pricing calculations for call options.
 They are completely decoupled from any presentation layer (CLI, GUI, Web).
 
 If the pricing formula changes, these tests should fail.
@@ -60,17 +60,17 @@ def test_higher_strike_means_lower_call_price():
 
 
 # ============================================================================
-# CLI Integration Tests
+# CLI Integration Tests - Call Options
 # ============================================================================
 
 def test_cli_end_to_end(monkeypatch, capsys):
     """
-    Test CLI interface produces expected output.
+    Test CLI interface produces expected output for call options.
     This tests the CLI presentation layer, not just calculation.
     """
     from src.option_pricer import main as cli_main
-    # Simulate user typing: s0=100, k1=120, k2=130, c_k1=5.0, alpha=3
-    inputs = iter(["100", "120", "130", "5.0", "3"])
+    # Simulate user typing: choice=1 (call), s0=100, k1=120, k2=130, c_k1=5.0, alpha=3
+    inputs = iter(["1", "100", "120", "130", "5.0", "3"])
     monkeypatch.setattr("builtins.input", lambda prompt="": next(inputs))
     cli_main()
     captured = capsys.readouterr()
@@ -80,11 +80,13 @@ def test_cli_end_to_end(monkeypatch, capsys):
 
 def test_main_cli_entry_point(monkeypatch, capsys):
     """
-    Test main.py entry point provides CLI functionality.
+    Test main.py entry point provides CLI functionality for call options.
     """
+    import importlib
     import main
-    # Simulate user typing: s0=100, k1=120, k2=130, c_k1=5.0, alpha=3
-    inputs = iter(["100", "120", "130", "5.0", "3"])
+    importlib.reload(main)  # Reload to ensure fresh import
+    # Simulate user typing: choice=1 (call), s0=100, k1=120, k2=130, c_k1=5.0, alpha=3
+    inputs = iter(["1", "100", "120", "130", "5.0", "3"])
     monkeypatch.setattr("builtins.input", lambda prompt="": next(inputs))
     main.main()
     captured = capsys.readouterr()

@@ -5,15 +5,10 @@ You must write a failing test before write any production code.
 You must not write more of a test than it's sufficient to fail.
 You must not write more production code than is sufficient to make the currently failing test pass.
 Follow red-green-yellow(refactor: remove duplications).
-translate this application option pricer from command line interface to GUI.
-But keep option for users still use CLI.
-Create a index.html for it.
 Try your best to finish development under seven tests.
 
 TODO:
-Structural wise reduce some tests to make sure its still working
-Complexity control before it explodes
-Real knowledge what doesn't work
+- Implement equation 7 result 3 of paper under Literature folder.
+- Create new test file for that 
+- Create CLI interface for that
 
-TODELEGATE:
-Generate a deployment plan to github pages
