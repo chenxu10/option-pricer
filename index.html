@@ -3,48 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Option Pricer</title>
+    <title>Option Pricer - Power Law Tail Pricing</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             max-width: 600px;
             margin: 50px auto;
             padding: 20px;
+            background-color: #f5f5f5;
         }
         h1 {
             color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .description {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+            font-size: 14px;
+            color: #666;
+            border-left: 4px solid #4CAF50;
+        }
+        form {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         label {
             display: inline-block;
             width: 200px;
             margin-bottom: 10px;
+            font-weight: bold;
+            color: #555;
         }
         input {
             width: 150px;
-            padding: 5px;
-            margin-bottom: 10px;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #4CAF50;
         }
         button {
             background-color: #4CAF50;
             color: white;
-            padding: 10px 20px;
+            padding: 12px 24px;
             border: none;
             cursor: pointer;
             font-size: 16px;
-            margin-top: 10px;
+            margin-top: 15px;
+            border-radius: 4px;
+            width: 100%;
         }
         button:hover {
             background-color: #45a049;
         }
         #result {
-            margin-top: 20px;
-            padding: 15px;
+            margin-top: 25px;
+            padding: 20px;
             border: 2px solid #4CAF50;
             background-color: #f0f8f0;
-            font-size: 18px;
+            font-size: 20px;
             font-weight: bold;
             color: #333;
             display: none;
+            border-radius: 4px;
+            text-align: center;
         }
         #result.error {
             border-color: #f44336;
@@ -54,91 +85,50 @@
         #result.show {
             display: block;
         }
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 12px;
+            color: #999;
+        }
     </style>
 </head>
 <body>
     <h1>Option Pricing Calculator</h1>
+    
+    <div class="description">
+        <strong>Power Law Tail Pricing</strong><br>
+        Calculate far out-of-the-money option prices using Taleb's power law formula. 
+        This tool estimates C(K2) given the known price C(K1) at a nearby strike, 
+        based on the assumption that tail risk follows a power law distribution.
+    </div>
+    
     <form id="pricing-form">
         <label for="s0">S0 (Current Price):</label>
-        <input type="number" id="s0" name="s0" step="0.01" required><br>
+        <input type="number" id="s0" name="s0" step="0.01" required placeholder="e.g., 581.73"><br>
         
         <label for="k1">K1 (Anchor Strike):</label>
-        <input type="number" id="k1" name="k1" step="0.01" required><br>
+        <input type="number" id="k1" name="k1" step="0.01" required placeholder="e.g., 590"><br>
         
         <label for="k2">K2 (Target Strike):</label>
-        <input type="number" id="k2" name="k2" step="0.01" required><br>
+        <input type="number" id="k2" name="k2" step="0.01" required placeholder="e.g., 600"><br>
         
         <label for="c_k1">C(K1) (Call Price at K1):</label>
-        <input type="number" id="c_k1" name="c_k1" step="0.01" required><br>
+        <input type="number" id="c_k1" name="c_k1" step="0.01" required placeholder="e.g., 0.03"><br>
         
         <label for="alpha">Alpha (Tail Index > 1):</label>
-        <input type="number" id="alpha" name="alpha" step="0.01" required><br>
+        <input type="number" id="alpha" name="alpha" step="0.1" required placeholder="e.g., 2.6"><br>
         
-        <button type="submit">Calculate</button>
+        <button type="submit">Calculate C(K2)</button>
     </form>
+    
     <div id="result"></div>
     
-    <script>
-        document.getElementById('pricing-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const resultDiv = document.getElementById('result');
-            resultDiv.className = 'show';
-            resultDiv.textContent = 'Calculating...';
-            
-            try {
-                const data = {
-                    s0: parseFloat(document.getElementById('s0').value),
-                    k1: parseFloat(document.getElementById('k1').value),
-                    k2: parseFloat(document.getElementById('k2').value),
-                    c_k1: parseFloat(document.getElementById('c_k1').value),
-                    alpha: parseFloat(document.getElementById('alpha').value)
-                };
-                
-                // Validate inputs
-                if (Object.values(data).some(isNaN)) {
-                    throw new Error('Please fill in all fields with valid numbers');
-                }
-                
-                if (data.alpha <= 1) {
-                    throw new Error('Alpha must be greater than 1');
-                }
-                
-                if (data.k1 <= data.s0 || data.k2 <= data.s0) {
-                    throw new Error('Strikes must be greater than S0');
-                }
-                
-                if (data.c_k1 <= 0) {
-                    throw new Error('C(K1) must be positive');
-                }
-                
-                const response = await fetch('/api/price', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(data)
-                });
-                
-                const result = await response.json();
-                
-                if (!response.ok) {
-                    throw new Error(result.error || 'Calculation failed');
-                }
-                
-                resultDiv.className = 'show';
-                resultDiv.innerHTML = `C(K2) = ${result.price.toFixed(6)}`;
-            } catch (error) {
-                resultDiv.className = 'show error';
-                
-                // Provide helpful error messages for common issues
-                let errorMessage = error.message;
-                if (error.message === 'Failed to fetch') {
-                    errorMessage = 'Failed to connect to server. Make sure to run "python run_web.py" first, then open http://127.0.0.1:5000';
-                }
-                
-                resultDiv.textContent = 'Error: ' + errorMessage;
-                console.error('Calculation error:', error);
-            }
-        });
-    </script>
+    <div class="footer">
+        Based on Taleb et al. (2019) "Tail Option Pricing Under Power Laws"<br>
+        No server required - all calculations happen in your browser
+    </div>
+    
+    <script src="script.js"></script>
 </body>
 </html>
