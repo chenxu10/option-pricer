@@ -1,67 +1,33 @@
-# Option Pricer - Power Law Tail Pricing
+# TODO:
 
-[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live-brightgreen)](https://yourusername.github.io/option-pricer/)
+- add peak at the money test case
+- add readme beyond 符号与经验
+- distribution of maxmin to stress test beyond historical worst
 
-> **TLDR**: Calculate far out-of-the-money option prices using Taleb's power law formula. Runs entirely in your browser - no server needed.
+# 超越符号与经验的陷阱——从贝叶斯到老子(以纳指100的期权定价为例)
 
-[Live Demo](https://yourusername.github.io/option-pricer/)
+> TLDR：这个工具希望在期权定价领域躲避纯粹经验和纯粹理论假设驱动的两种陷阱。
 
-## What This Tool Does
+有人认为市场能定价和自组织解决一切问题。有人认为政府、模型和计划能解决一切问题。
+这两个都是陷阱。人类创造了语言，把我们与动物区分开来。这可能是远比劳动、使用火和制造工具更重要的区分。有了语言，我们就有了定义符号、选择符号以及连接符号与经验的自由。但是，我们也被符号所束缚，语言和符号系统本身也有难以突破的局限性。
 
-This tool estimates the price of a far out-of-the-money call option C(K2) given the known price C(K1) of a closer-to-the-money option, using the assumption that tail risk follows a power law distribution.
+老子在《道德经》开篇点出了语言和符号本身的局限，道可道，非常道，名可名，非常名。哥德尔则给出了严格的数学证明，对于一个足够强大的形式系统，如果它是一致的，那么它就不可能完备，如果它是完备的，那么就不可能一致。他举出了一个石破天惊的反例：“这个命题在本系统中无法被证明。”
 
-**Formula:** `C(K2) = ((K2 - S0) / (K1 - S0))^(1 - alpha) * C(K1)`
+那怎么办？
 
-### Parameters
-- **S0**: Current underlying price
-- **K1**: Strike price where we know the option price (must be > S0)
-- **K2**: Strike price we want to price (must be > S0)
-- **C(K1)**: Known call option price at K1 (must be positive)
-- **Alpha**: Tail index/power law exponent (must be > 1)
+老子给出了一个心理适应的求知方法：无欲以观奇妙，有欲以观其徼。先把自己的欲望、观点和信仰放空掉，看到自己在整个生态系统中渺小的存在。然后再把自己带入其中找到止和足。后其身而身先，外其身而身存。
 
-## Why Power Law?
+贝叶斯爵士给出一个更加可操作的公式，把经验事实与先验信仰连接到了一起。(TDDO)add formula
 
-Most financial models assume normal distributions, but extreme events (market crashes) happen more frequently than normal distributions predict. The power law distribution better captures "fat tails" - the probability of rare but extreme events.
+落地到期权交易的风险管理有两个陷阱需要避免：
 
-This approach avoids two common traps:
-1. **Pure theoretical models** (like Black-Scholes) that assume normality and ignore tail risk
-2. **Pure empirical approaches** that assume "this time is different" but ignore the mathematical structure of extreme events
+第一个陷阱：纯粹凭借书本与“理论”的参数模型，比如VAR,BSM公式等。强假设变化符合正态分布并且完全不考虑压力事件下你急需流动性时需要付出的飞天的成本。
 
-## Deployment to GitHub Pages
+第二个陷阱：纯粹经验注意的道路，去拟合所有的经验数据，去假设市场是有智能的，它的价格已经蕴含了所有的信息。但是纪录就是用来被打破的。如果你的压力测试是去应对历史上最糟糕的事，你势必被下一次洪水所淹没。百年不遇的洪水只是平均每一百年来一次，但是每年都有1%的概率一定来一次。
 
-This is a **static website** - all calculations happen in your browser using JavaScript. No Python server required.
+这个工具力图超越这两种陷阱找到一种相对定价的模式，用平直附近的期权去推测尾部远端的价外期权。具体的数学公式参考了塔勒布2023年发布的基于帕累托定律的价外期权定价公式。
 
-### Quick Deploy
+## 参考文献
+1. Taleb, N. N., Yarckin, B., Mann, C., Delic, D., & Spitznagel, M. (2019). Tail option pricing under power laws. arXiv preprint arXiv:1908.02347.
 
-1. Fork or clone this repository
-2. Go to your forked repo on GitHub
-3. Click **Settings** → **Pages** (in the left sidebar)
-4. Under "Source", select **Deploy from a branch**
-5. Select **main** branch and **/(root)** folder
-6. Click **Save**
-7. Wait 2-5 minutes
-8. Your site will be live at: `https://yourusername.github.io/option-pricer/`
 
-### Files Explained
-
-- `index.html` - The web interface
-- `script.js` - The pricing calculation (runs in browser)
-- No server-side code needed!
-
-## Local Development
-
-To test locally, simply open `index.html` in your browser:
-
-```bash
-# Or use Python's built-in server
-python -m http.server 8000
-# Then open http://localhost:8000
-```
-
-## References
-
-1. Taleb, N. N., et al. (2019). "Tail Option Pricing Under Power Laws". arXiv:1908.02347.
-
-## License
-
-MIT
