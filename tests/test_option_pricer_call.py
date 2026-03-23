@@ -130,3 +130,79 @@ class TestCalculationAccuracy:
         # Test case 3: k2 == k1 should return c_k1
         result3 = price_call(s0=100, k1=120, k2=120, c_k1=5.0, alpha=3)
         assert result3 == pytest.approx(5.0)
+
+
+# ============================================================================
+# Power Law vs Black-Scholes Comparison Tests
+# ============================================================================
+
+def test_power_law_exceeds_bsm_for_far_otm_calls():
+    """
+    Test that power law heuristic prices far OTM calls higher than BSM.
+    
+    Rationale: BSM assumes normal distribution (thin tails), while power law 
+    accounts for fat tails (Pareto distribution). For far OTM strikes, 
+    the probability of extreme moves is much higher under power law,
+    resulting in higher option prices that better reflect tail risk.
+    
+    This test verifies Taleb's critique that BSM underprices deep OTM options
+    by ignoring fat-tail effects.
+    """
+    import math
+    
+    def black_scholes_call(S, K, T, r, sigma):
+        """
+        Simple Black-Scholes formula for European call option.
+        Uses scipy-like cumulative normal distribution approximation.
+        """
+        def norm_cdf(x):
+            """Approximation of the cumulative normal distribution function."""
+            # Abramowitz and Stegun approximation (error < 7.5e-8)
+            a1 = 0.254829592
+            a2 = -0.284496736
+            a3 = 1.421413741
+            a4 = -1.453152027
+            a5 = 1.061405429
+            p = 0.3275911
+            
+            sign = 1 if x >= 0 else -1
+            x = abs(x) / math.sqrt(2)
+            
+            t = 1.0 / (1.0 + p * x)
+            y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * math.exp(-x * x)
+            
+            return 0.5 * (1.0 + sign * y)
+        
+        if T <= 0 or sigma <= 0:
+            return max(0, S - K) if T <= 0 else 0
+        
+        d1 = (math.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * math.sqrt(T))
+        d2 = d1 - sigma * math.sqrt(T)
+        
+        call_price = S * norm_cdf(d1) - K * math.exp(-r * T) * norm_cdf(d2)
+        return call_price
+    
+    # Market parameters
+    s0 = 100.0  # Current underlying price
+    k1 = 120.0  # Anchor strike (near ATM)
+    c_k1 = 5.0  # Market price at K1 (used as anchor)
+    k2 = 150.0  # Far OTM strike (30% OTM, deep tail)
+    alpha = 2.5  # Tail index indicating fat tails
+    
+    # Power law price for far OTM call
+    power_law_price = price_call(s0=s0, k1=k1, k2=k2, c_k1=c_k1, alpha=alpha)
+    
+    # BSM parameters (implied from anchor price or assumed)
+    t = 0.25  # 3 months to expiration
+    r = 0.05  # 5% risk-free rate
+    sigma = 0.20  # 20% volatility (typical equity volatility)
+    
+    # BSM price for the same far OTM call
+    bsm_price = black_scholes_call(s0, k2, t, r, sigma)
+
+    # Power law should significantly exceed BSM for far OTM
+    # This demonstrates the impact of fat tails vs normal distribution
+    assert power_law_price > bsm_price, (
+        f"Power law price ({power_law_price:.6f}) should exceed BSM price ({bsm_price:.6f}) "
+        f"for far OTM calls. Ratio: {power_law_price/bsm_price:.1f}x"
+    )
