@@ -206,3 +206,19 @@ def test_power_law_exceeds_bsm_for_far_otm_calls():
         f"Power law price ({power_law_price:.6f}) should exceed BSM price ({bsm_price:.6f}) "
         f"for far OTM calls. Ratio: {power_law_price/bsm_price:.1f}x"
     )
+
+
+def test_bsm_cli_end_to_end(monkeypatch, capsys):
+    """
+    Test CLI interface for BSM option pricing.
+    """
+    from src.option_pricer import main as cli_main
+    # Simulate user typing: choice=3 (BSM), c (call), S=100, K=100, T=0.25, r=0.05, sigma=0.20
+    inputs = iter(["3", "c", "100", "100", "0.25", "0.05", "0.20"])
+    monkeypatch.setattr("builtins.input", lambda prompt="": next(inputs))
+    cli_main()
+    captured = capsys.readouterr()
+    # Should output BSM Call Price
+    assert "BSM Call Price" in captured.out
+    # Price should be around 4.61 for ATM call with these params
+    assert "4." in captured.out or "5." in captured.out
