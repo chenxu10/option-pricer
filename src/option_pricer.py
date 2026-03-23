@@ -39,10 +39,11 @@ def price_put(s0, k1, k2, p_k1, alpha):
 
 
 import math
+from py_vollib.ref_python.black_scholes_merton import black_scholes_merton
 
 def bsm_call_price(S, K, T, r, sigma):
     """
-    Calculate the Black-Scholes-Merton price for a European call option.
+    Calculate the Black-Scholes-Merton price for a European call option using py_vollib.
     
     Args:
         S: Current underlying price
@@ -54,36 +55,12 @@ def bsm_call_price(S, K, T, r, sigma):
     Returns:
         Call option price
     """
-    if T <= 0 or sigma <= 0:
-        return max(0, S - K) if T <= 0 else 0
-    
-    def norm_cdf(x):
-        """Abramowitz and Stegun approximation of cumulative normal distribution."""
-        a1 = 0.254829592
-        a2 = -0.284496736
-        a3 = 1.421413741
-        a4 = -1.453152027
-        a5 = 1.061405429
-        p = 0.3275911
-        
-        sign = 1 if x >= 0 else -1
-        x_abs = abs(x) / math.sqrt(2)
-        
-        t = 1.0 / (1.0 + p * x_abs)
-        y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * math.exp(-x_abs * x_abs)
-        
-        return 0.5 * (1.0 + sign * y)
-    
-    d1 = (math.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * math.sqrt(T))
-    d2 = d1 - sigma * math.sqrt(T)
-    
-    return S * norm_cdf(d1) - K * math.exp(-r * T) * norm_cdf(d2)
+    return black_scholes_merton('c', S, K, T, r, sigma, 0.0)
 
 
 def bsm_put_price(S, K, T, r, sigma):
     """
-    Calculate the Black-Scholes-Merton price for a European put option.
-    Uses put-call parity: P = C - S + K*exp(-rT)
+    Calculate the Black-Scholes-Merton price for a European put option using py_vollib.
     
     Args:
         S: Current underlying price
@@ -95,8 +72,7 @@ def bsm_put_price(S, K, T, r, sigma):
     Returns:
         Put option price
     """
-    call_price = bsm_call_price(S, K, T, r, sigma)
-    return call_price - S + K * math.exp(-r * T)
+    return black_scholes_merton('p', S, K, T, r, sigma, 0.0)
 
 
 def main():

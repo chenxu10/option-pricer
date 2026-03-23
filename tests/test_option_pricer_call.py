@@ -148,39 +148,7 @@ def test_power_law_exceeds_bsm_for_far_otm_calls():
     This test verifies Taleb's critique that BSM underprices deep OTM options
     by ignoring fat-tail effects.
     """
-    import math
-    
-    def black_scholes_call(S, K, T, r, sigma):
-        """
-        Simple Black-Scholes formula for European call option.
-        Uses scipy-like cumulative normal distribution approximation.
-        """
-        def norm_cdf(x):
-            """Approximation of the cumulative normal distribution function."""
-            # Abramowitz and Stegun approximation (error < 7.5e-8)
-            a1 = 0.254829592
-            a2 = -0.284496736
-            a3 = 1.421413741
-            a4 = -1.453152027
-            a5 = 1.061405429
-            p = 0.3275911
-            
-            sign = 1 if x >= 0 else -1
-            x = abs(x) / math.sqrt(2)
-            
-            t = 1.0 / (1.0 + p * x)
-            y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * math.exp(-x * x)
-            
-            return 0.5 * (1.0 + sign * y)
-        
-        if T <= 0 or sigma <= 0:
-            return max(0, S - K) if T <= 0 else 0
-        
-        d1 = (math.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * math.sqrt(T))
-        d2 = d1 - sigma * math.sqrt(T)
-        
-        call_price = S * norm_cdf(d1) - K * math.exp(-r * T) * norm_cdf(d2)
-        return call_price
+    from src.option_pricer import bsm_call_price
     
     # Market parameters
     s0 = 100.0  # Current underlying price
@@ -197,8 +165,8 @@ def test_power_law_exceeds_bsm_for_far_otm_calls():
     r = 0.05  # 5% risk-free rate
     sigma = 0.20  # 20% volatility (typical equity volatility)
     
-    # BSM price for the same far OTM call
-    bsm_price = black_scholes_call(s0, k2, t, r, sigma)
+    # BSM price for the same far OTM call using py_vollib
+    bsm_price = bsm_call_price(s0, k2, t, r, sigma)
 
     # Power law should significantly exceed BSM for far OTM
     # This demonstrates the impact of fat tails vs normal distribution
