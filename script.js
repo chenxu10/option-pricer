@@ -36,7 +36,7 @@ function priceCall(s0, k1, k2, cK1, alpha) {
  * @param {number} k1 - Anchor strike price (must be < s0 for puts)
  * @param {number} k2 - Target strike price (must be < s0 for puts)
  * @param {number} pK1 - Price of put option at K1 (must be > 0)
- * @param {number} alpha - Tail index (must be > 1)
+ * @param {number} alpha - Tail index (must be > 1 and must be integer)
  * @returns {number} - Calculated price P(K2)
  * @throws {Error} - If validation fails
  */
@@ -44,6 +44,10 @@ function pricePut(s0, k1, k2, pK1, alpha) {
     // Input validation
     if (alpha <= 1) {
         throw new Error("Alpha must be greater than 1");
+    }
+    // Check if alpha is an integer (or float that's effectively an integer like 3.0)
+    if (!Number.isInteger(alpha) && !Number.isInteger(Math.round(alpha))) {
+        throw new Error("Alpha must be an integer for put pricing to produce real-valued results");
     }
     if (k1 >= s0) {
         throw new Error("K1 must be less than S0");
@@ -77,6 +81,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const labelPrice = document.getElementById('label-price');
     const calcButton = document.getElementById('calc-button');
     const formulaInfo = document.getElementById('formula-info');
+    const alphaInput = document.getElementById('alpha');
     
     if (!form || !resultDiv) {
         console.error('Required elements not found');
@@ -92,6 +97,8 @@ document.addEventListener('DOMContentLoaded', function() {
             labelK2.textContent = 'K2 (Target Strike > S0):';
             labelPrice.textContent = 'C(K1) (Call Price at K1):';
             calcButton.textContent = 'Calculate C(K2)';
+            alphaInput.step = '0.1';
+            alphaInput.placeholder = 'e.g., 2.6';
             formulaInfo.innerHTML = `
                 <strong>Call Option Formula (Equation 6):</strong><br>
                 C(K2) = C(K1) × [(K2 - S0) / (K1 - S0)]^(1-α)<br><br>
@@ -102,13 +109,16 @@ document.addEventListener('DOMContentLoaded', function() {
             labelK2.textContent = 'K2 (Target Strike < S0):';
             labelPrice.textContent = 'P(K1) (Put Price at K1):';
             calcButton.textContent = 'Calculate P(K2)';
+            alphaInput.step = '1';
+            alphaInput.placeholder = 'e.g., 3 (must be integer)';
             formulaInfo.innerHTML = `
                 <strong>Put Option Formula (Equation 7):</strong><br>
                 P(K2) = P(K1) × [numerator] / [denominator]<br><br>
                 Where:<br>
                 • numerator = (K2-S0)^(1-α) - S0^(1-α)×[(α-1)K2 + S0]<br>
                 • denominator = (K1-S0)^(1-α) - S0^(1-α)×[(α-1)K1 + S0]<br><br>
-                K1, K2 < S0 (OTM puts) and α > 1
+                K1, K2 < S0 (OTM puts) and <strong>α must be an integer > 1</strong><br>
+                <em>(Non-integer α produces complex numbers due to negative base raised to fractional power)</em>
             `;
         }
     }

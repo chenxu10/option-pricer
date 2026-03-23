@@ -14,9 +14,14 @@ def price_put(s0, k1, k2, p_k1, alpha):
     """
     Equation 7 (Result 3): Put Pricing
     P(K2) = P(K1) * [numerator] / [denominator]
+    
+    Note: For real-valued results, alpha must be an integer.
+    When alpha is fractional, negative base raised to fractional power produces complex numbers.
     """
     if alpha <= 1:
         raise ValueError("alpha must be greater than 1")
+    if not isinstance(alpha, int) and not alpha.is_integer():
+        raise ValueError("alpha must be an integer for put pricing to produce real-valued results")
     if k1 >= s0:
         raise ValueError("k1 must be less than s0")
     if k2 >= s0:

@@ -21,10 +21,12 @@ def test_put_pricing_basic():
     Equation 7: P(K2) = P(K1) * [numerator] / [denominator]
     where numerator = (K2-S0)^(1-α) - S0^(1-α)*((α-1)K2 + S0)
     and denominator = (K1-S0)^(1-α) - S0^(1-α)*((α-1)K1 + S0)
+    
+    Note: alpha must be integer for real-valued results (non-integer alpha produces complex numbers)
     """
     result = price_put(s0=100, k1=90, k2=80, p_k1=2.0, alpha=3)
     # This should calculate the put price for K2=80 given K1=90 with P(K1)=2.0
-    assert result > 0
+    assert result > 0.08
 
 
 def test_put_k2_equals_k1_returns_p_k1():
