@@ -1,8 +1,5 @@
 # TODO:
-
-- add peak at the money test case
-- add readme beyond 符号与经验
-- distribution of maxmin to stress test beyond historical worst
+- Further testing on Put and BSM comparison
 
 # 超越符号与经验的陷阱——从贝叶斯到老子(以纳指100的期权定价为例)
 
