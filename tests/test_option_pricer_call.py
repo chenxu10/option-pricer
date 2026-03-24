@@ -159,6 +159,8 @@ def test_power_law_exceeds_bsm_for_far_otm_calls():
     
     # Power law price for far OTM call
     power_law_price = price_call(s0=s0, k1=k1, k2=k2, c_k1=c_k1, alpha=alpha)
+    print(f"Power Law parameters: s0={s0}, k1={k1}, k2={k2}, c_k1={c_k1}, alpha={alpha}")
+    print(f"Power Law price: {power_law_price}")
     
     # BSM parameters (implied from anchor price or assumed)
     t = 0.25  # 3 months to expiration
@@ -167,6 +169,9 @@ def test_power_law_exceeds_bsm_for_far_otm_calls():
     
     # BSM price for the same far OTM call using py_vollib
     bsm_price = bsm_call_price(s0, k2, t, r, sigma)
+    print(f"BSM parameters: s0={s0}, k2={k2}, t={t}, r={r}, sigma={sigma}")
+    print(f"BSM price: {bsm_price}")
+    print(f"Price ratio (Power Law / BSM): {power_law_price/bsm_price:.2f}x")
 
     # Power law should significantly exceed BSM for far OTM
     # This demonstrates the impact of fat tails vs normal distribution
