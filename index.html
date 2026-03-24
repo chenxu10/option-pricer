@@ -26,14 +26,14 @@
             color: #666;
             border-left: 4px solid #4CAF50;
         }
-        .option-type-selector {
+        .option-type-selector, .pricing-method-selector {
             background-color: #fff;
             padding: 20px;
             border-radius: 8px;
             margin-bottom: 20px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        .option-type-selector label {
+        .option-type-selector label, .pricing-method-selector label {
             display: inline;
             font-weight: bold;
             color: #555;
@@ -123,11 +123,41 @@
 <body>
     <h1>Option Pricing Calculator</h1>
     
-    <div class="description">
+    <div class="description" id="description-powerlaw">
         <strong>Power Law Tail Pricing</strong><br>
         Calculate far out-of-the-money option prices using Taleb's power law formula. 
         This tool estimates option prices at strike K2 given the known price at a nearby anchor strike K1, 
         based on the assumption that tail risk follows a power law distribution.
+    </div>
+    
+    <div class="description" id="description-bsm" style="display: none;">
+        <strong>Black-Scholes-Merton Pricing</strong><br>
+        Calculate European option prices using the classic Black-Scholes-Merton model. 
+        This uses the underlying price, strike, time to expiration, risk-free rate, and volatility.
+    </div>
+    
+    <div class="pricing-method-selector">
+        <label>Select Pricing Method:</label>
+        <div class="radio-group">
+            <label>
+                <input type="radio" name="pricingMethod" value="powerlaw" checked> Power Law Tail
+            </label>
+            <label>
+                <input type="radio" name="pricingMethod" value="bsm"> Black-Scholes-Merton
+            </label>
+        </div>
+    </div>
+    
+    <div class="pricing-method-selector">
+        <label>Select Pricing Method:</label>
+        <div class="radio-group">
+            <label>
+                <input type="radio" name="pricingMethod" value="powerlaw" checked> Power Law Tail
+            </label>
+            <label>
+                <input type="radio" name="pricingMethod" value="bsm"> Black-Scholes-Merton
+            </label>
+        </div>
     </div>
     
     <div class="option-type-selector">
@@ -146,17 +176,33 @@
         <label for="s0">S0 (Current Price):</label>
         <input type="number" id="s0" name="s0" step="0.01" required placeholder="e.g., 100"><br>
         
-        <label for="k1" id="label-k1">K1 (Anchor Strike > S0):</label>
-        <input type="number" id="k1" name="k1" step="0.01" required placeholder="e.g., 120"><br>
+        <div id="powerlaw-fields">
+            <label for="k1" id="label-k1">K1 (Anchor Strike > S0):</label>
+            <input type="number" id="k1" name="k1" step="0.01" required placeholder="e.g., 120"><br>
+            
+            <label for="k2" id="label-k2">K2 (Target Strike > S0):</label>
+            <input type="number" id="k2" name="k2" step="0.01" required placeholder="e.g., 130"><br>
+            
+            <label for="price_k1" id="label-price">C(K1) (Call Price at K1):</label>
+            <input type="number" id="price_k1" name="price_k1" step="0.01" required placeholder="e.g., 5.0"><br>
+            
+            <label for="alpha">Alpha (Tail Index > 1):</label>
+            <input type="number" id="alpha" name="alpha" step="1" required placeholder="e.g., 3 (integer for puts)"><br>
+        </div>
         
-        <label for="k2" id="label-k2">K2 (Target Strike > S0):</label>
-        <input type="number" id="k2" name="k2" step="0.01" required placeholder="e.g., 130"><br>
-        
-        <label for="price_k1" id="label-price">C(K1) (Call Price at K1):</label>
-        <input type="number" id="price_k1" name="price_k1" step="0.01" required placeholder="e.g., 5.0"><br>
-        
-        <label for="alpha">Alpha (Tail Index > 1):</label>
-        <input type="number" id="alpha" name="alpha" step="1" required placeholder="e.g., 3 (integer for puts)"><br>
+        <div id="bsm-fields" style="display: none;">
+            <label for="bsm-k">K (Strike Price):</label>
+            <input type="number" id="bsm-k" name="bsm-k" step="0.01" placeholder="e.g., 100"><br>
+            
+            <label for="bsm-t">T (Time to Expiration in Years):</label>
+            <input type="number" id="bsm-t" name="bsm-t" step="0.01" placeholder="e.g., 0.25 for 3 months"><br>
+            
+            <label for="bsm-r">r (Risk-Free Rate):</label>
+            <input type="number" id="bsm-r" name="bsm-r" step="0.001" placeholder="e.g., 0.05 for 5%"><br>
+            
+            <label for="bsm-sigma">Sigma (Volatility):</label>
+            <input type="number" id="bsm-sigma" name="bsm-sigma" step="0.01" placeholder="e.g., 0.20 for 20%"><br>
+        </div>
         
         <button type="submit" id="calc-button">Calculate C(K2)</button>
     </form>
@@ -167,6 +213,15 @@
         <strong>Call Option Formula (Equation 6):</strong><br>
         C(K2) = C(K1) × [(K2 - S0) / (K1 - S0)]^(1-α)<br><br>
         Where K1, K2 > S0 (OTM calls) and α > 1
+    </div>
+    
+    <div class="formula-info" id="bsm-formula-info" style="display: none;">
+        <strong>Black-Scholes-Merton Formula:</strong><br>
+        Call: C = S×N(d1) - K×e^(-rT)×N(d2)<br>
+        Put: P = K×e^(-rT)×N(-d2) - S×N(-d1)<br><br>
+        Where:<br>
+        d1 = [ln(S/K) + (r + σ²/2)T] / (σ√T)<br>
+        d2 = d1 - σ√T
     </div>
     
     <script src="script.js"></script>
