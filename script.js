@@ -47,9 +47,9 @@ function pricePut(s0, k1, k2, pK1, alpha) {
     
     // Apply the power law formula in return space
     // Derived from Equation 7 by substituting K = S0(1-r)
-    // P(K2) = P(K1) * [r2^(1-α) - (α-1)*r2 + 1] / [r1^(1-α) - (α-1)*r1 + 1]
-    const numerator = Math.pow(r2, 1 - alpha) - (alpha - 1) * r2 + 1;
-    const denominator = Math.pow(r1, 1 - alpha) - (alpha - 1) * r1 + 1;
+    // P(K2) = P(K1) * [α - r2^(1-α) - (α-1)*r2] / [α - r1^(1-α) - (α-1)*r1]
+    const numerator = alpha - Math.pow(r2, 1 - alpha) - (alpha - 1) * r2;
+    const denominator = alpha - Math.pow(r1, 1 - alpha) - (alpha - 1) * r1;
     
     if (Math.abs(denominator) < 1e-15) {
         throw new Error("Invalid parameters: denominator is too close to zero");
@@ -198,7 +198,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 alphaInput.placeholder = 'e.g., 2.6';
                 formulaInfo.innerHTML = `
                     <strong>Put Option Formula (Equation 7 in return space):</strong><br>
-                    P(K2) = P(K1) × [r2^(1-α) - (α-1)r2 + 1] / [r1^(1-α) - (α-1)r1 + 1]<br><br>
+                    P(K2) = P(K1) × [α - r2^(1-α) - (α-1)r2] / [α - r1^(1-α) - (α-1)r1]<br><br>
                     Where r = (S0 - K) / S0 (positive returns for OTM puts)<br>
                     and α > 1 (any real number)
                 `;

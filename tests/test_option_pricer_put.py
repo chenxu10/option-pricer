@@ -20,7 +20,7 @@ def test_put_pricing_basic():
     Test 1: Basic put pricing test
     
     Equation 7 in return space:
-    P(K2) = P(K1) * [r2^(1-α) - (α-1)r2 + 1] / [r1^(1-α) - (α-1)r1 + 1]
+    P(K2) = P(K1) * [α - r2^(1-α) - (α-1)r2] / [α - r1^(1-α) - (α-1)r1]
     where r = (S0 - K) / S0
     
     This formula works for any real α > 1, not just integers.
@@ -92,11 +92,12 @@ def test_put_calculation_accuracy():
     s0, k1, k2, p_k1, alpha = 100, 90, 80, 2.0, 3
     
     # Manual calculation according to corrected formula in return space
+    # P(K2) = P(K1) * [α - r2^(1-α) - (α-1)*r2] / [α - r1^(1-α) - (α-1)*r1]
     r1 = (s0 - k1) / s0  # (100-90)/100 = 0.1
     r2 = (s0 - k2) / s0  # (100-80)/100 = 0.2
     
-    numerator = r2 ** (1 - alpha) - (alpha - 1) * r2 + 1
-    denominator = r1 ** (1 - alpha) - (alpha - 1) * r1 + 1
+    numerator = alpha - r2 ** (1 - alpha) - (alpha - 1) * r2
+    denominator = alpha - r1 ** (1 - alpha) - (alpha - 1) * r1
     expected = p_k1 * numerator / denominator
     
     result = price_put(s0=s0, k1=k1, k2=k2, p_k1=p_k1, alpha=alpha)
@@ -108,11 +109,12 @@ def test_put_calculation_accuracy_non_integer_alpha():
     s0, k1, k2, p_k1, alpha = 100, 90, 80, 2.0, 2.5
     
     # Manual calculation according to corrected formula in return space
+    # P(K2) = P(K1) * [α - r2^(1-α) - (α-1)*r2] / [α - r1^(1-α) - (α-1)*r1]
     r1 = (s0 - k1) / s0  # 0.1
     r2 = (s0 - k2) / s0  # 0.2
     
-    numerator = r2 ** (1 - alpha) - (alpha - 1) * r2 + 1
-    denominator = r1 ** (1 - alpha) - (alpha - 1) * r1 + 1
+    numerator = alpha - r2 ** (1 - alpha) - (alpha - 1) * r2
+    denominator = alpha - r1 ** (1 - alpha) - (alpha - 1) * r1
     expected = p_k1 * numerator / denominator
     
     result = price_put(s0=s0, k1=k1, k2=k2, p_k1=p_k1, alpha=alpha)

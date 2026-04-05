@@ -18,7 +18,7 @@ def price_put(s0, k1, k2, p_k1, alpha):
     We transform to return space where r > 0 for OTM puts (K < S0).
     
     Formula in return space:
-    P(K2) = P(K1) * [r2^(1-α) - (α-1)*r2 + 1] / [r1^(1-α) - (α-1)*r1 + 1]
+    P(K2) = P(K1) * [α - r2^(1-α) - (α-1)*r2] / [α - r1^(1-α) - (α-1)*r1]
     where r = (S0 - K) / S0
     
     Args:
@@ -46,9 +46,9 @@ def price_put(s0, k1, k2, p_k1, alpha):
     r2 = (s0 - k2) / s0  # return at K2
     
     # Apply the power law formula in return space
-    # P(K2) = P(K1) * [r2^(1-α) - (α-1)*r2 + 1] / [r1^(1-α) - (α-1)*r1 + 1]
-    numerator = r2 ** (1 - alpha) - (alpha - 1) * r2 + 1
-    denominator = r1 ** (1 - alpha) - (alpha - 1) * r1 + 1
+    # P(K2) = P(K1) * [α - r2^(1-α) - (α-1)*r2] / [α - r1^(1-α) - (α-1)*r1]
+    numerator = alpha - r2 ** (1 - alpha) - (alpha - 1) * r2
+    denominator = alpha - r1 ** (1 - alpha) - (alpha - 1) * r1
     
     if abs(denominator) < 1e-15:
         raise ValueError("Invalid parameters: denominator is too close to zero")
