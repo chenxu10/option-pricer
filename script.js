@@ -23,26 +23,37 @@ function priceCall(s0, k1, k2, cK1, alpha) {
 
 /**
  * Calculate the price of a put option at strike K2 using the power law formula
+ * Based on Equation 7, properly transformed to return space
+ * r = (S0 - K) / S0, where returns are positive for OTM puts (K < S0)
  */
 function pricePut(s0, k1, k2, pK1, alpha) {
     if (alpha <= 1) {
         throw new Error("Alpha must be greater than 1");
     }
-    if (!Number.isInteger(alpha) && !Number.isInteger(Math.round(alpha))) {
-        throw new Error("Alpha must be an integer for put pricing to produce real-valued results");
-    }
     if (k1 >= s0) {
-        throw new Error("K1 must be less than S0");
+        throw new Error("K1 must be less than S0 for puts (OTM puts)");
     }
     if (k2 >= s0) {
-        throw new Error("K2 must be less than S0");
+        throw new Error("K2 must be less than S0 for puts (OTM puts)");
     }
     if (pK1 <= 0) {
         throw new Error("P(K1) must be positive");
     }
     
-    const numerator = (k2 - s0) ** (1 - alpha) - (s0 ** (1 - alpha)) * ((alpha - 1) * k2 + s0);
-    const denominator = (k1 - s0) ** (1 - alpha) - (s0 ** (1 - alpha)) * ((alpha - 1) * k1 + s0);
+    // Transform strikes to returns: r = (S0 - K) / S0
+    // This gives positive returns for OTM puts (K < S0)
+    const r1 = (s0 - k1) / s0;  // return at K1
+    const r2 = (s0 - k2) / s0;  // return at K2
+    
+    // Apply the power law formula in return space
+    // Derived from Equation 7 by substituting K = S0(1-r)
+    // P(K2) = P(K1) * [r2^(1-α) - (α-1)*r2 + 1] / [r1^(1-α) - (α-1)*r1 + 1]
+    const numerator = Math.pow(r2, 1 - alpha) - (alpha - 1) * r2 + 1;
+    const denominator = Math.pow(r1, 1 - alpha) - (alpha - 1) * r1 + 1;
+    
+    if (Math.abs(denominator) < 1e-15) {
+        throw new Error("Invalid parameters: denominator is too close to zero");
+    }
     
     return pK1 * numerator / denominator;
 }
@@ -183,15 +194,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 labelK2.textContent = 'K2 (Target Strike < S0):';
                 labelPrice.textContent = 'P(K1) (Put Price at K1):';
                 calcButton.textContent = 'Calculate P(K2)';
-                alphaInput.step = '1';
-                alphaInput.placeholder = 'e.g., 3 (must be integer)';
+                alphaInput.step = '0.1';
+                alphaInput.placeholder = 'e.g., 2.6';
                 formulaInfo.innerHTML = `
-                    <strong>Put Option Formula (Equation 7):</strong><br>
-                    P(K2) = P(K1) × [numerator] / [denominator]<br><br>
-                    Where:<br>
-                    • numerator = (K2-S0)^(1-α) - S0^(1-α)×[(α-1)K2 + S0]<br>
-                    • denominator = (K1-S0)^(1-α) - S0^(1-α)×[(α-1)K1 + S0]<br><br>
-                    K1, K2 < S0 (OTM puts) and <strong>α must be an integer > 1</strong>
+                    <strong>Put Option Formula (Equation 7 in return space):</strong><br>
+                    P(K2) = P(K1) × [r2^(1-α) - (α-1)r2 + 1] / [r1^(1-α) - (α-1)r1 + 1]<br><br>
+                    Where r = (S0 - K) / S0 (positive returns for OTM puts)<br>
+                    and α > 1 (any real number)
                 `;
             }
         } else {

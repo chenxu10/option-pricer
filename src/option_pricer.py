@@ -12,16 +12,27 @@ def price_call(s0, k1, k2, c_k1, alpha):
 
 def price_put(s0, k1, k2, p_k1, alpha):
     """
-    Equation 7 (Result 3): Put Pricing
-    P(K2) = P(K1) * [numerator] / [denominator]
+    Calculate put option price at strike K2 using power law formula (Equation 7).
     
-    Note: For real-valued results, alpha must be an integer.
-    When alpha is fractional, negative base raised to fractional power produces complex numbers.
+    The formula is derived for returns r = (S0 - K) / S0, not absolute strikes.
+    We transform to return space where r > 0 for OTM puts (K < S0).
+    
+    Formula in return space:
+    P(K2) = P(K1) * [r2^(1-α) - (α-1)*r2 + 1] / [r1^(1-α) - (α-1)*r1 + 1]
+    where r = (S0 - K) / S0
+    
+    Args:
+        s0: Current underlying price
+        k1: Anchor strike price (must be < s0)
+        k2: Target strike price (must be < s0)
+        p_k1: Price of put option at K1
+        alpha: Tail index (must be > 1, any real number)
+    
+    Returns:
+        Put option price at K2
     """
     if alpha <= 1:
         raise ValueError("alpha must be greater than 1")
-    if not isinstance(alpha, int) and not alpha.is_integer():
-        raise ValueError("alpha must be an integer for put pricing to produce real-valued results")
     if k1 >= s0:
         raise ValueError("k1 must be less than s0")
     if k2 >= s0:
@@ -29,11 +40,18 @@ def price_put(s0, k1, k2, p_k1, alpha):
     if p_k1 <= 0:
         raise ValueError("p_k1 must be positive")
     
-    # Calculate numerator: (K2 - S0)^(1-α) - S0^(1-α)*((α-1)K2 + S0)
-    numerator = (k2 - s0) ** (1 - alpha) - (s0 ** (1 - alpha)) * ((alpha - 1) * k2 + s0)
+    # Transform strikes to returns: r = (S0 - K) / S0
+    # This gives positive returns for OTM puts (K < S0)
+    r1 = (s0 - k1) / s0  # return at K1
+    r2 = (s0 - k2) / s0  # return at K2
     
-    # Calculate denominator: (K1 - S0)^(1-α) - S0^(1-α)*((α-1)K1 + S0)
-    denominator = (k1 - s0) ** (1 - alpha) - (s0 ** (1 - alpha)) * ((alpha - 1) * k1 + s0)
+    # Apply the power law formula in return space
+    # P(K2) = P(K1) * [r2^(1-α) - (α-1)*r2 + 1] / [r1^(1-α) - (α-1)*r1 + 1]
+    numerator = r2 ** (1 - alpha) - (alpha - 1) * r2 + 1
+    denominator = r1 ** (1 - alpha) - (alpha - 1) * r1 + 1
+    
+    if abs(denominator) < 1e-15:
+        raise ValueError("Invalid parameters: denominator is too close to zero")
     
     return p_k1 * numerator / denominator
 
