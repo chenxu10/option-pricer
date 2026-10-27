@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - refactor/orthogonal
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+      - run: uv sync --extra dev
+      - run: uv run ruff check src tests scripts
+      - run: uv run mypy
+      - run: uv run pytest -m "not e2e"
+
+  e2e:
+    name: Browser / Pyodide
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+          enable-cache: true
+      - run: uv sync --extra dev --extra e2e
+      - run: uv run playwright install --with-deps chromium
+      - run: uv run python scripts/build_site.py
+      - run: uv run pytest -m e2e
+
+  package:
+    name: Wheel
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+          enable-cache: true
+      - run: uv sync --extra dev
+      - run: uv run python scripts/build_site.py
+      - name: Verify the artifact is dependency-free
+        run: |
+          uv run python - <<'PY'
+          import glob
+          import tomllib
+          import zipfile
+
+          with open("pyproject.toml", "rb") as handle:
+              project = tomllib.load(handle)["project"]
+          assert project["dependencies"] == [], project["dependencies"]
+
+          wheel = glob.glob("pkg/option_pricer-*.whl")[0]
+          with zipfile.ZipFile(wheel) as archive:
+              names = archive.namelist()
+          assert any(name.endswith("/METADATA") for name in names), names
+          assert not any("__pycache__" in name for name in names), names
+          print(f"verified {wheel}")
+          PY

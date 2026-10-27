@@ -1,0 +1,10 @@
+{
+  "version": "v1",
+  "method": "power_law",
+  "option_type": "call",
+  "spot": 581.73,
+  "anchor_strike": 590.0,
+  "target_strike": 600.0,
+  "anchor_price": 0.03,
+  "alpha": 2.6
+}

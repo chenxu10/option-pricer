@@ -1,14 +1,52 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
 [project]
 name = "option-pricer"
-version = "0.1.0"
-description = "Add your description here"
+version = "0.2.0"
+description = "Tail option pricing with a pure Python model and CLI/browser adapters"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = [
-    "flask>=3.0.0",
-    "py-vollib>=1.0.1",
-    "pytest>=9.0.2",
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "build>=1.2",
+    "hatchling>=1.27",
+    "hypothesis>=6.100",
+    "mypy>=1.11",
+    "pytest>=8",
+    "pytest-cov>=5",
+    "ruff>=0.6",
 ]
 
-[tool.setuptools.packages.find]
-where = ["src"]
+e2e = ["playwright>=1.48"]
+
+[project.scripts]
+option-pricer = "option_pricer.adapters.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/option_pricer"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-ra"
+markers = [
+    "e2e: browser tests that load the real Pyodide runtime",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["src"]
+warn_unused_ignores = true

@@ -1,0 +1,47 @@
+name: Deploy static site (manual)
+
+# The repository currently publishes the root of main through GitHub Pages.
+# This workflow is the clean migration path: switch Settings -> Pages ->
+# Source to "GitHub Actions", then dispatch this workflow once.  It is manual
+# so it cannot fail while the repository is still using branch publishing.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+          enable-cache: true
+      - run: uv sync --extra dev
+      - run: uv run ruff check src tests scripts
+      - run: uv run mypy
+      - run: uv run pytest -m "not e2e"
+      - run: uv run python scripts/build_site.py
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

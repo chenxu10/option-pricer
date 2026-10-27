@@ -1,34 +1,252 @@
-# 超越符号与经验的陷阱——从贝叶斯到老子(以纳指100的期权定价为例)
+# Option Pricer
 
-> TLDR：这个工具希望在期权定价领域躲避纯粹经验和纯粹理论假设驱动的两种陷阱。
+[Live site](https://chenxu10.github.io/option-pricer/) ·
+[CI](https://github.com/chenxu10/option-pricer/actions/workflows/ci.yml)
 
-有人认为市场能定价和自组织解决一切问题。有人认为政府、模型和计划能解决一切问题。这两个都是陷阱。人类创造了语言，把我们与动物区分开来。这可能是远比劳动、使用火和制造工具更重要的区分。有了语言，我们就有了定义符号、选择符号以及连接符号与经验的自由。但是，我们也被符号所束缚，语言和符号系统本身也有难以突破的局限性。
+A tail-option pricing calculator with **one Python model** and two adapters:
+a command-line interface and a static browser UI. The browser runs CPython
+through [Pyodide](https://pyodide.org/), so the site remains a pure static
+GitHub Pages deployment — no Python server, no duplicated JavaScript math.
 
-老子在《道德经》开篇点出了语言和符号本身的局限，道可道，非常道，名可名，非常名。哥德尔则给出了严格的数学证明，对于一个足够强大的形式系统，如果它是一致的，那么它就不可能完备，如果它是完备的，那么就不可能一致。他举出了一个石破天惊的反例：“这个命题在本系统中无法被证明。”
+The model implements Taleb's power-law extrapolation of far out-of-the-money
+option prices from an observed anchor strike, alongside a
+Black-Scholes-Merton benchmark.
 
-那怎么办？
+## What it does
 
-老子给出了一个心理适应的求知方法：无欲以观奇妙，有欲以观其徼。先把自己的欲望、观点和信仰放空掉，看到自己在整个生态系统中渺小的存在。然后再把自己带入其中找到止和足。后其身而身先，外其身而身存。
+- **Power-law tail pricing.** Given `S0`, an anchor strike `K1`, a target
+  strike `K2`, the observed option price at `K1`, and a tail index `α > 1`,
+  estimate the price at `K2`.
+- **Calls and puts.** Calls use the direct strike-space formula; puts use the
+  return-space form `r = (S0 − K) / S0`, which keeps returns positive for
+  out-of-the-money puts.
+- **BSM benchmark.** European call and put prices with a standard-library
+  implementation of Black-Scholes-Merton.
+- **CLI and web parity.** Both adapters call the same application use case and
+  the same domain functions.
 
-贝叶斯爵士给出一个更加可操作的公式，把经验事实与先验信仰连接到了一起。
+## Why Python in the browser?
 
-**贝叶斯公式：** P(θ|D) = P(D|θ) × P(θ) / P(D)
+GitHub Pages serves static files only. Pyodide is CPython compiled to
+WebAssembly: the browser downloads it as a static asset and runs it locally.
+The first visit downloads about 6 MB (cached by the CDN); the form itself
+renders immediately and the runtime warms up in the background. Subsequent
+calculations are effectively instant.
 
-其中：
-- P(θ|D) 是后验概率（观察到数据D后参数θ的概率）
-- P(D|θ) 是似然（在参数θ下观察到数据D的概率）  
-- P(θ) 是先验概率（在观察数据前对参数θ的初始信念）
-- P(D) 是边际似然（数据D的总概率）
+This is a deliberate tradeoff. A 30-line JavaScript formula would load faster,
+but it would recreate the problem this project exists to remove: two
+implementations of the same math, with the deployed one untested. The model is
+the product; the JavaScript is a thin transport layer.
 
-落地到期权交易的风险管理有两个陷阱需要避免：
+## Architecture
 
-第一个陷阱：纯粹凭借书本与“理论”的参数模型，比如VAR,BSM公式等。强假设变化符合正态分布并且完全不考虑压力事件下你急需流动性时需要付出的飞天的成本。
+```text
+Browser (static GitHub Pages)
+┌──────────────────────────────────────────────────────────────┐
+│  index.html + styles.css        view                          │
+│  app.js                         form controller               │
+│        │  JSON request/response                               │
+│        ▼                                                      │
+│  gateway.js                     worker + timeout lifecycle    │
+│        │                                                      │
+│  pyodide-worker.js              transport only                │
+│        │                                                      │
+│  Pyodide (CPython 3.14 → WASM)                                │
+│  ┌────────────────────────────────────────────────────────┐   │
+│  │  adapters/web_bridge.py     JSON v1 ↔ typed request    │   │
+│  │        │                                               │   │
+│  │        ▼                                               │   │
+│  │  application/pricing.py     price_option(request)      │   │
+│  │        │                                               │   │
+│  │        ▼                                               │   │
+│  │  domain/                    power law + BSM            │   │
+│  └────────────────────────────────────────────────────────┘   │
+└──────────────────────────────────────────────────────────────┘
+          ▲ same wheel
+CLI ──────┘  `option-pricer ...`
+```
 
-第二个陷阱：纯粹经验主义的道路，去拟合所有的经验数据，去假设市场是有智能的，它的价格已经蕴含了所有的信息。但是纪录就是用来被打破的。如果你的压力测试是去应对历史上最糟糕的事，你势必被下一次洪水所淹没。百年不遇的洪水只是平均每一百年来一次，但是每年都有1%的概率一定来一次。
+| Layer | Responsibility | Must not know |
+|---|---|---|
+| `domain/` | Formulas, invariants, typed numeric errors | JSON, DOM, CLI, Pyodide |
+| `application/` | Typed requests, dispatch, v1 JSON contract | DOM, labels, Pyodide |
+| `adapters/` | CLI and browser bridge | Formulas |
+| `app.js` / `gateway.js` | Form state, worker transport | Pricing math |
+| `pyodide-worker.js` | Load runtime and wheel, forward JSON | Pricing math |
 
-这个工具力图超越这两种陷阱找到一种相对定价的模式，用平直附近的期权去推测尾部远端的价外期权。具体的数学公式参考了塔勒布2023年发布的基于帕累托定律的价外期权定价公式。
+The dependency rule is one-directional: **domain ← application ← adapters**.
+An AST-based architecture test enforces it.
 
-## 参考文献
-1. Taleb, N. N., Yarckin, B., Mann, C., Delic, D., & Spitznagel, M. (2019). Tail option pricing under power laws. arXiv preprint arXiv:1908.02347.
+More detail: [architecture](docs/architecture.md) and the
+[ADRs](docs/adr/).
 
+## Model
 
+Call, strike space:
+
+```text
+C(K2) = C(K1) × [(K2 − S0) / (K1 − S0)]^(1−α)
+```
+
+Put, return space (`r = (S0 − K) / S0`):
+
+```text
+P(K2) = P(K1) × [α − r2^(1−α) − (α−1)r2]
+                / [α − r1^(1−α) − (α−1)r1]
+```
+
+BSM uses the standard normal CDF evaluated with `math.erfc`, which avoids
+cancellation in the far tail. There are no runtime dependencies.
+
+See [docs/model.md](docs/model.md) for assumptions, validation rules, and
+numerical notes.
+
+## Quick start
+
+Requires Python 3.12+ and [uv](https://docs.astral.sh/uv/).
+
+```bash
+uv sync --extra dev
+
+# Power-law call
+uv run option-pricer powerlaw \
+  --option-type call --spot 581.73 \
+  --anchor-strike 590 --target-strike 600 \
+  --anchor-price 0.03 --alpha 2.6
+
+# BSM put, machine-readable
+uv run option-pricer bsm \
+  --option-type put --spot 100 --strike 100 \
+  --time 0.25 --rate 0.05 --vol 0.2 --json
+```
+
+Build the wheel and the local static artifact:
+
+```bash
+uv run python scripts/build_site.py
+```
+
+The repository root is directly deployable. To preview locally with the wheel
+and build metadata:
+
+```bash
+python -m http.server 8000
+# open http://127.0.0.1:8000/
+```
+
+## Tests
+
+```bash
+uv run pytest -m "not e2e"   # fast: domain, contract, CLI, architecture
+
+# browser test: needs the e2e extra and a browser
+uv sync --extra dev --extra e2e
+uv run playwright install chromium
+uv run pytest -m e2e         # real Chromium + real Pyodide + wheel
+```
+
+The suite includes:
+
+- golden values and Hypothesis property tests for the formulas;
+- BSM put-call parity and bounds;
+- strict v1 contract tests (malformed JSON, NaN, unknown fields, error codes);
+- CLI tests with injected streams;
+- architecture tests that forbid formulas in JavaScript and I/O in the domain;
+- a Playwright end-to-end test of the built artifact at the real
+  `/option-pricer/` subpath.
+
+CI runs Python 3.12, 3.13, and 3.14, plus a browser job and a wheel job. See
+[.github/workflows/ci.yml](.github/workflows/ci.yml).
+
+## Deployment
+
+The current GitHub Pages publishing source is the repository root of `main`.
+`scripts/build_site.py` writes the versioned wheel to `pkg/`, the build
+metadata to `build-info.json`, and stages an identical `site/` directory for
+CI or an Actions-based deployment.
+
+To migrate to Actions, set **Settings → Pages → Source** to **GitHub Actions**
+and run the [manual deployment workflow](.github/workflows/pages-manual.yml).
+The live URL does not change. See [docs/deployment.md](docs/deployment.md).
+
+## Contract
+
+The Python/JavaScript seam is a small, versioned JSON envelope. Example:
+
+```json
+{
+  "version": "v1",
+  "method": "power_law",
+  "option_type": "call",
+  "spot": 581.73,
+  "anchor_strike": 590,
+  "target_strike": 600,
+  "anchor_price": 0.03,
+  "alpha": 2.6
+}
+```
+
+Success:
+
+```json
+{"version":"v1","ok":true,"price":0.00844,"method":"power_law","option_type":"call"}
+```
+
+Failure:
+
+```json
+{"version":"v1","ok":false,"error":{"code":"STRIKE_DOMAIN","field":"anchor_strike","message":"K1 must be greater than S0 for calls."}}
+```
+
+Fixtures live in [contracts/v1/examples](contracts/v1/examples). The Python
+side rejects malformed JSON, duplicate keys, unknown fields, and non-finite
+numbers; errors carry a stable code and field for the UI to map.
+
+## Project layout
+
+```text
+src/option_pricer/
+  domain/            pure formulas and typed errors
+  application/       typed requests, use case, v1 contract
+  adapters/          CLI and web bridge
+index.html           view
+styles.css
+app.js               form controller
+gateway.js           worker transport
+pyodide-worker.js    Pyodide loader
+scripts/build_site.py
+tests/               domain, application, adapters, architecture, e2e
+contracts/v1/        JSON fixtures
+docs/                architecture, model, ADRs, deployment
+pkg/                 built wheel (small, committed for root deployment)
+```
+
+## Design notes
+
+The refactor follows the orthogonality principle from *The Pragmatic
+Programmer*: eliminate effects between unrelated things. Concretely:
+
+- changing a validation rule touches one domain file, not the UI;
+- changing the BSM implementation does not touch the browser;
+- changing the layout does not touch Python;
+- swapping Pyodide for an HTTP API means replacing `gateway.js` and the worker,
+  not the model;
+- the only duplicated shape is the JSON contract, and it is tested at the seam.
+
+## Limitations
+
+The power-law model is a relative tail-pricing heuristic, not a no-arbitrage
+model. It assumes a constant tail index between the two strikes. BSM assumes
+European exercise, no dividends, constant volatility, and a constant rate.
+This is an educational project, not investment advice.
+
+## Motivation and references
+
+The original essay — on Bayesian inference, language, and the two traps of pure
+experience and pure theory — is preserved in
+[docs/motivation.md](docs/motivation.md).
+
+1. Taleb, N. N., Yarckin, B., Mann, C., Delic, D., & Spitznagel, M. (2019).
+   *Tail Option Pricing Under Power Laws.* arXiv:1908.02347.
+2. The paper copy is in
+   [Literature/2023-12-31-nnt-tail_option_under_power_law.pdf](Literature/2023-12-31-nnt-tail_option_under_power_law.pdf).

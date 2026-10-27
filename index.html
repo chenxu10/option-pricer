@@ -1,217 +1,194 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Option Pricer - Power Law Tail Pricing</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 600px;
-            margin: 50px auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        h1 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .description {
-            background-color: #fff;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 30px;
-            font-size: 14px;
-            color: #666;
-            border-left: 4px solid #4CAF50;
-        }
-        .option-type-selector, .pricing-method-selector {
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .option-type-selector label, .pricing-method-selector label {
-            display: inline;
-            font-weight: bold;
-            color: #555;
-            margin-right: 20px;
-        }
-        .radio-group {
-            display: inline-flex;
-            gap: 20px;
-        }
-        .radio-group input[type="radio"] {
-            width: auto;
-            margin-right: 5px;
-        }
-        form {
-            background-color: #fff;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        label {
-            display: inline-block;
-            width: 200px;
-            margin-bottom: 10px;
-            font-weight: bold;
-            color: #555;
-        }
-        input {
-            width: 150px;
-            padding: 8px;
-            margin-bottom: 15px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        input:focus {
-            outline: none;
-            border-color: #4CAF50;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 12px 24px;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-            margin-top: 15px;
-            border-radius: 4px;
-            width: 100%;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        #result {
-            margin-top: 25px;
-            padding: 20px;
-            border: 2px solid #4CAF50;
-            background-color: #f0f8f0;
-            font-size: 20px;
-            font-weight: bold;
-            color: #333;
-            display: none;
-            border-radius: 4px;
-            text-align: center;
-        }
-        #result.error {
-            border-color: #f44336;
-            background-color: #ffebee;
-            color: #d32f2f;
-        }
-        #result.show {
-            display: block;
-        }
-        .formula-info {
-            margin-top: 20px;
-            padding: 15px;
-            background-color: #e3f2fd;
-            border-left: 4px solid #2196F3;
-            border-radius: 4px;
-            font-size: 13px;
-            color: #555;
-        }
-        .formula-info strong {
-            color: #1976D2;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Option Pricer — Power-Law Tail &amp; Black-Scholes</title>
+  <meta name="description" content="Price far out-of-the-money options with Taleb's power-law tail extrapolation or Black-Scholes-Merton. The pricing model is Python, running in your browser.">
+  <meta name="color-scheme" content="light">
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./app.js"></script>
 </head>
 <body>
-    <h1>Option Pricing Calculator</h1>
-    
-    <div class="description" id="description-powerlaw">
-        <strong>Power Law Tail Pricing</strong><br>
-        Calculate far out-of-the-money option prices using Taleb's power law formula. 
-        This tool estimates option prices at strike K2 given the known price at a nearby anchor strike K1, 
-        based on the assumption that tail risk follows a power law distribution.
+  <a class="skip-link" href="#pricing-form">Skip to calculator</a>
+
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <div>
+        <p class="eyebrow">Python in the browser · Pyodide</p>
+        <h1>Option Pricer</h1>
+        <p class="lede">
+          Price far out-of-the-money options from a nearby anchor, using Taleb's
+          power-law tail extrapolation — or compare with Black-Scholes-Merton.
+        </p>
+      </div>
+      <div class="runtime-box">
+        <span id="runtime-status" class="runtime-status" data-state="idle" role="status" aria-live="polite">
+          Python runtime not loaded yet.
+        </span>
+        <button type="button" id="retry-runtime" class="link-button" hidden>Retry runtime</button>
+        <p class="runtime-note">The model runs locally in your browser.</p>
+      </div>
     </div>
-    
-    <div class="description" id="description-bsm" style="display: none;">
-        <strong>Black-Scholes-Merton Pricing</strong><br>
-        Calculate European option prices using the classic Black-Scholes-Merton model. 
-        This uses the underlying price, strike, time to expiration, risk-free rate, and volatility.
-    </div>
-    
-    <div class="pricing-method-selector">
-        <label>Select Pricing Method:</label>
-        <div class="radio-group">
-            <label>
-                <input type="radio" name="pricingMethod" value="powerlaw" checked> Power Law Tail
-            </label>
-            <label>
-                <input type="radio" name="pricingMethod" value="bsm"> Black-Scholes-Merton
-            </label>
+  </header>
+
+  <main class="wrap">
+    <section class="card intro-card" aria-labelledby="intro-title">
+      <h2 id="intro-title">Relative pricing, not a forecast</h2>
+      <p>
+        The power-law model does not claim to know the future distribution of returns.
+        It takes one observed out-of-the-money option price as an anchor and asks what a
+        further strike should cost if the tail decays like a Pareto law with index
+        <span class="math">α &gt; 1</span>. The BSM tab is a conventional benchmark.
+      </p>
+    </section>
+
+    <form id="pricing-form" class="card pricing-form" novalidate>
+      <fieldset class="control-group">
+        <legend>Pricing method</legend>
+        <div class="radio-row">
+          <label class="radio-label">
+            <input type="radio" name="method" value="power_law" checked>
+            <span>Power-law tail</span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="method" value="black_scholes">
+            <span>Black-Scholes-Merton</span>
+          </label>
         </div>
-    </div>
-    
-    <div class="option-type-selector">
-        <label>Select Option Type:</label>
-        <div class="radio-group">
-            <label>
-                <input type="radio" name="optionType" value="call" checked> Call Option
-            </label>
-            <label>
-                <input type="radio" name="optionType" value="put"> Put Option
-            </label>
+      </fieldset>
+
+      <fieldset class="control-group">
+        <legend>Option type</legend>
+        <div class="radio-row">
+          <label class="radio-label">
+            <input type="radio" name="option_type" value="call" checked>
+            <span>Call</span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="option_type" value="put">
+            <span>Put</span>
+          </label>
         </div>
-    </div>
-    
-    <form id="pricing-form">
-        <label for="s0">S0 (Current Price):</label>
-        <input type="number" id="s0" name="s0" step="0.01" required placeholder="e.g., 100"><br>
-        
-        <div id="powerlaw-fields">
-            <label for="k1" id="label-k1">K1 (Anchor Strike > S0):</label>
-            <input type="number" id="k1" name="k1" step="0.01" required placeholder="e.g., 120"><br>
-            
-            <label for="k2" id="label-k2">K2 (Target Strike > S0):</label>
-            <input type="number" id="k2" name="k2" step="0.01" required placeholder="e.g., 130"><br>
-            
-            <label for="price_k1" id="label-price">C(K1) (Call Price at K1):</label>
-            <input type="number" id="price_k1" name="price_k1" step="0.01" required placeholder="e.g., 5.0"><br>
-            
-            <label for="alpha">Alpha (Tail Index > 1):</label>
-            <input type="number" id="alpha" name="alpha" step="1" required placeholder="e.g., 3 (integer for puts)"><br>
+      </fieldset>
+
+      <div class="field-grid">
+        <div class="field">
+          <label for="spot">Spot price <span class="math">S<sub>0</sub></span></label>
+          <input id="spot" name="spot" type="number" step="any" inputmode="decimal" placeholder="e.g. 581.73" required>
         </div>
-        
-        <div id="bsm-fields" style="display: none;">
-            <label for="bsm-k">K (Strike Price):</label>
-            <input type="number" id="bsm-k" name="bsm-k" step="0.01" placeholder="e.g., 100"><br>
-            
-            <label for="bsm-t">T (Time to Expiration in Years):</label>
-            <input type="number" id="bsm-t" name="bsm-t" step="0.01" placeholder="e.g., 0.25 for 3 months"><br>
-            
-            <label for="bsm-r">r (Risk-Free Rate):</label>
-            <input type="number" id="bsm-r" name="bsm-r" step="0.001" placeholder="e.g., 0.05 for 5%"><br>
-            
-            <label for="bsm-sigma">Sigma (Volatility):</label>
-            <input type="number" id="bsm-sigma" name="bsm-sigma" step="0.01" placeholder="e.g., 0.20 for 20%"><br>
+      </div>
+
+      <div id="power-law-fields" class="field-grid">
+        <div class="field">
+          <label for="anchor_strike" id="anchor-strike-label">Anchor strike <span class="math">K<sub>1</sub></span></label>
+          <input id="anchor_strike" name="anchor_strike" type="number" step="any" inputmode="decimal" placeholder="e.g. 590" required>
+          <p class="hint" id="anchor-strike-hint">Above spot for calls.</p>
         </div>
-        
-        <button type="submit" id="calc-button">Calculate C(K2)</button>
+        <div class="field">
+          <label for="target_strike" id="target-strike-label">Target strike <span class="math">K<sub>2</sub></span></label>
+          <input id="target_strike" name="target_strike" type="number" step="any" inputmode="decimal" placeholder="e.g. 600" required>
+          <p class="hint" id="target-strike-hint">Above spot for calls.</p>
+        </div>
+        <div class="field">
+          <label for="anchor_price" id="anchor-price-label">Anchor price <span class="math" id="anchor-price-symbol">C(K<sub>1</sub>)</span></label>
+          <input id="anchor_price" name="anchor_price" type="number" step="any" inputmode="decimal" placeholder="e.g. 0.03" required>
+          <p class="hint">The observed option price at the anchor strike.</p>
+        </div>
+        <div class="field">
+          <label for="alpha">Tail index <span class="math">α</span></label>
+          <input id="alpha" name="alpha" type="number" step="any" inputmode="decimal" placeholder="e.g. 2.6" required>
+          <p class="hint">Must be greater than 1.</p>
+        </div>
+      </div>
+
+      <div id="bsm-fields" class="field-grid" hidden>
+        <div class="field">
+          <label for="strike">Strike <span class="math">K</span></label>
+          <input id="strike" name="strike" type="number" step="any" inputmode="decimal" placeholder="e.g. 100">
+        </div>
+        <div class="field">
+          <label for="time_to_expiry">Time to expiry <span class="math">T</span></label>
+          <input id="time_to_expiry" name="time_to_expiry" type="number" step="any" inputmode="decimal" placeholder="e.g. 0.25 (years)">
+        </div>
+        <div class="field">
+          <label for="rate">Risk-free rate <span class="math">r</span></label>
+          <input id="rate" name="rate" type="number" step="any" inputmode="decimal" placeholder="e.g. 0.05">
+          <p class="hint">Decimal form: 0.05 means 5%.</p>
+        </div>
+        <div class="field">
+          <label for="volatility">Volatility <span class="math">σ</span></label>
+          <input id="volatility" name="volatility" type="number" step="any" inputmode="decimal" placeholder="e.g. 0.20">
+          <p class="hint">Annualised, decimal form.</p>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" id="calculate">Calculate C(K<sub>2</sub>)</button>
+        <p class="form-note">The first calculation may wait for the Python runtime to finish loading.</p>
+      </div>
+
+      <section class="result-panel" id="result-panel" aria-labelledby="result-label">
+        <p class="result-label" id="result-label">Result</p>
+        <output id="result" class="result-value" aria-live="polite">—</output>
+        <p id="error" class="error-message" role="alert" hidden></p>
+      </section>
     </form>
-    
-    <div id="result"></div>
-    
-    <div class="formula-info" id="formula-info">
-        <strong>Call Option Formula (Equation 6):</strong><br>
-        C(K2) = C(K1) &times; [(K2 - S0) / (K1 - S0)]^(1-&alpha;)<br><br>
-        Where K1, K2 &gt; S0 (OTM calls) and &alpha; &gt; 1
+
+    <section class="card formula-card" id="power-law-formula" aria-labelledby="power-law-formula-title">
+      <h2 id="power-law-formula-title">Power-law tail formula</h2>
+      <div id="formula-call">
+        <p class="formula">C(K<sub>2</sub>) = C(K<sub>1</sub>) × [(K<sub>2</sub> − S<sub>0</sub>) / (K<sub>1</sub> − S<sub>0</sub>)]<sup>(1−α)</sup></p>
+        <p class="hint">Where K<sub>1</sub>, K<sub>2</sub> &gt; S<sub>0</sub> (out-of-the-money calls) and α &gt; 1.</p>
+      </div>
+      <div id="formula-put" hidden>
+        <p class="formula">P(K<sub>2</sub>) = P(K<sub>1</sub>) × [α − r<sub>2</sub><sup>(1−α)</sup> − (α−1)r<sub>2</sub>] / [α − r<sub>1</sub><sup>(1−α)</sup> − (α−1)r<sub>1</sub>]</p>
+        <p class="hint">Where r = (S<sub>0</sub> − K) / S<sub>0</sub> is positive for out-of-the-money puts, and α &gt; 1.</p>
+      </div>
+    </section>
+
+    <section class="card formula-card" id="bsm-formula" aria-labelledby="bsm-formula-title" hidden>
+      <h2 id="bsm-formula-title">Black-Scholes-Merton formula</h2>
+      <p class="formula">C = S × N(d<sub>1</sub>) − K × e<sup>−rT</sup> × N(d<sub>2</sub>)</p>
+      <p class="formula">P = K × e<sup>−rT</sup> × N(−d<sub>2</sub>) − S × N(−d<sub>1</sub>)</p>
+      <p class="hint">d<sub>1</sub> = [ln(S/K) + (r + σ²/2)T] / (σ√T), d<sub>2</sub> = d<sub>1</sub> − σ√T. No dividends; European exercise.</p>
+    </section>
+
+    <section class="card notes-card" aria-labelledby="notes-title">
+      <h2 id="notes-title">How this is built</h2>
+      <p>
+        The pricing formulas, validation and orchestration are one pure Python model.
+        The CLI calls it directly; this page calls the same model through a thin
+        JavaScript gateway and a CPython runtime compiled to WebAssembly (Pyodide).
+        There is no Python server and no second implementation of the math.
+      </p>
+      <p class="hint">
+        Educational project. Not investment advice. The power-law model is a relative
+        tail-pricing heuristic, not a no-arbitrage model.
+      </p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap footer-inner">
+      <p>
+        Model <span id="build-version">dev</span>
+        <span class="dot">·</span>
+        <a href="https://github.com/chenxu10/option-pricer">Source</a>
+        <span class="dot">·</span>
+        <a href="https://github.com/chenxu10/option-pricer#readme">README</a>
+      </p>
+      <p id="build-meta" class="hint">Python runtime loads on demand.</p>
     </div>
-    
-    <div class="formula-info" id="bsm-formula-info" style="display: none;">
-        <strong>Black-Scholes-Merton Formula:</strong><br>
-        Call: C = S×N(d1) - K×e^(-rT)×N(d2)<br>
-        Put: P = K×e^(-rT)×N(-d2) - S×N(-d1)<br><br>
-        Where:<br>
-        d1 = [ln(S/K) + (r + σ²/2)T] / (σ√T)<br>
-        d2 = d1 - σ√T
-    </div>
-    
-    <script src="script.js"></script>
+  </footer>
+
+  <noscript>
+    <p class="wrap noscript">
+      This calculator needs JavaScript and WebAssembly to run the Python model.
+      You can run the same model locally with <code>option-pricer --help</code>.
+    </p>
+  </noscript>
 </body>
 </html>

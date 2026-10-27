@@ -1,10 +1,6 @@
-from src.option_pricer import main as cli_main
+"""Backward-compatible entry point for the CLI."""
 
-
-def main():
-    """Entry point that runs the CLI option pricer"""
-    cli_main()
-
+from option_pricer.adapters.cli import main
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
