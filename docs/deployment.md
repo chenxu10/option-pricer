@@ -15,15 +15,15 @@ the pinned Pyodide CDN and cached by the browser.
 ## Build the artifact
 
 ```bash
-uv sync --extra dev
+uv sync
 uv run python scripts/build_site.py
 ```
 
-For browser tests, add the `e2e` extra and install Chromium:
+For browser tests, include the `e2e` group and install Chromium:
 
 ```bash
-uv sync --extra dev --extra e2e
-uv run playwright install chromium
+uv sync --group e2e
+uv run --group e2e playwright install chromium
 ```
 
 The script:

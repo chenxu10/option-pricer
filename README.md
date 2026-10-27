@@ -111,7 +111,7 @@ numerical notes.
 Requires Python 3.12+ and [uv](https://docs.astral.sh/uv/).
 
 ```bash
-uv sync --extra dev
+uv sync
 
 # Power-law call
 uv run option-pricer powerlaw \
@@ -144,11 +144,16 @@ python -m http.server 8000
 ```bash
 uv run pytest -m "not e2e"   # fast: domain, contract, CLI, architecture
 
-# browser test: needs the e2e extra and a browser
-uv sync --extra dev --extra e2e
-uv run playwright install chromium
-uv run pytest -m e2e         # real Chromium + real Pyodide + wheel
+# browser test: needs the e2e group and a browser
+uv sync --group e2e
+uv run --group e2e playwright install chromium
+uv run --group e2e pytest -m e2e   # real Chromium + real Pyodide + wheel
 ```
+
+`uv run` installs the default `dev` dependency group, so `uv run pytest` works
+in a fresh clone. If it reports collection errors or an old `pytest 6.x`, the
+local `.venv` predates the dependency-group change; rebuild it with
+`uv sync --reinstall` (or delete `.venv` and rerun).
 
 The suite includes:
 

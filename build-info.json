@@ -1,6 +1,6 @@
 {
   "version": "0.2.0",
-  "commit": "ed72926",
+  "commit": "c361a4e",
   "contract": "v1",
   "pyodide": {
     "version": "314.0.7",
@@ -8,6 +8,6 @@
     "indexURL": "https://cdn.jsdelivr.net/pyodide/v314.0.7/full/"
   },
   "wheel": "pkg/option_pricer-0.2.0-py3-none-any.whl",
-  "wheel_sha256": "5aead4e70080e476b1f83c91a17a2e231160797309bd1b7bd747116467b4c011",
-  "built_at": "2026-10-27T00:52:05+00:00"
+  "wheel_sha256": "11420bd54de23c8e50effdb9678e448537904e85835b7ce5b5ec673528c8a132",
+  "built_at": "2026-10-27T01:34:12+00:00"
 }

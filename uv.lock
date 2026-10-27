@@ -553,7 +553,7 @@ name = "option-pricer"
 version = "0.2.0"
 source = { editable = "." }
 
-[package.optional-dependencies]
+[package.dev-dependencies]
 dev = [
     { name = "build" },
     { name = "hatchling" },
@@ -568,17 +568,18 @@ e2e = [
 ]
 
 [package.metadata]
-requires-dist = [
-    { name = "build", marker = "extra == 'dev'", specifier = ">=1.2" },
-    { name = "hatchling", marker = "extra == 'dev'", specifier = ">=1.27" },
-    { name = "hypothesis", marker = "extra == 'dev'", specifier = ">=6.100" },
-    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.11" },
-    { name = "playwright", marker = "extra == 'e2e'", specifier = ">=1.48" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8" },
-    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.6" },
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "build", specifier = ">=1.2" },
+    { name = "hatchling", specifier = ">=1.27" },
+    { name = "hypothesis", specifier = ">=6.100" },
+    { name = "mypy", specifier = ">=1.11" },
+    { name = "pytest", specifier = ">=8" },
+    { name = "pytest-cov", specifier = ">=5" },
+    { name = "ruff", specifier = ">=0.6" },
 ]
-provides-extras = ["dev", "e2e"]
+e2e = [{ name = "playwright", specifier = ">=1.48" }]
 
 [[package]]
 name = "packaging"
