@@ -38,6 +38,11 @@ but it would recreate the problem this project exists to remove: two
 implementations of the same math, with the deployed one untested. The model is
 the product; the JavaScript is a thin transport layer.
 
+Measured on a desktop Chrome session in October 2026: the form's DOM was ready
+in under a second, the Python runtime was ready in about 6–7 seconds on a cold
+cache, and the priced result followed immediately. Repeat visits benefit from
+the CDN's immutable cache.
+
 ## Architecture
 
 ```text
